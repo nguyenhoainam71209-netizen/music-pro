@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Music PRO</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial;
+    background:#02121f;
+    color:#fff;
+}
+
+.container{ display:flex; }
+
+.sidebar{
+    width:240px;
+    background:#061d2f;
+    padding:20px;
+}
+
+/* MINI PLAYER */
+.mini-player{
+    background:linear-gradient(145deg,#0a2a40,#051826);
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:20px;
+    text-align:center;
+    box-shadow:0 0 25px rgba(0,255,159,0.2);
+}
+
+.mini-cover{
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    margin:auto;
+    box-shadow:0 0 20px #00ff9f;
+}
+
+@keyframes spin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+}
+
+.mini-cover.playing{
+    animation: spin 6s linear infinite;
+}
+
+.mini-title{
+    margin-top:10px;
+    font-size:14px;
+    font-weight:600;
+    color:#00ffcc;
+}
+
+.welcome{
+    margin-top:20px;
+    font-size:14px;
+    color:#00ffcc;
+    text-align:center;
+}
+
+/* MAIN */
+.main{
+    flex:1;
+    padding:20px;
+}
+
+/* UPLOAD */
+.upload-box{
+    border:2px dashed #00ff9f55;
+    border-radius:15px;
+    padding:30px;
+    text-align:center;
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:0.3s;
+}
+
+.upload-box:hover{
+    background:#00ff9f11;
+}
+
+.upload-box.drag{
+    border-color:#00ff9f;
+    background:#00ff9f22;
+}
+
+.upload-name{
+    margin-top:10px;
+    color:#00ffcc;
+}
+
+.upload-progress{
+    height:6px;
+    background:#333;
+    border-radius:10px;
+    margin-top:10px;
+    overflow:hidden;
+}
+
+.upload-bar{
+    height:100%;
+    width:0%;
+    background:#00ff9f;
+}
+
+/* 🔥 LIST SCROLL FIX */
+.list-container{
+    max-height:350px;
+    overflow-y:auto;
+    border-radius:10px;
+}
+
+/* SCROLL đẹp */
+.list-container::-webkit-scrollbar{
+    width:6px;
+}
+.list-container::-webkit-scrollbar-thumb{
+    background:#00ff9f;
+    border-radius:10px;
+}
+
+/* SONG */
+.song{
+    padding:10px;
+    border-bottom:1px solid #0a2a40;
+    display:flex;
+    justify-content:space-between;
+    cursor:pointer;
+}
+
+.song:hover{
+    background:#00ff9f11;
+}
+
+.del{ color:red; }
+
+/* PLAYER */
+.player{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    height:150px;
+    background:linear-gradient(to top,#010b16,#02121f);
+}
+
+.wave{
+    position:absolute;
+    bottom:60px;
+    width:100%;
+    height:70px;
+    display:flex;
+    align-items:flex-end;
+    gap:2px;
+    padding:0 80px;
+}
+
+.bar{
+    flex:1;
+    background:linear-gradient(180deg,#00ffc3,#7a00ff,#ff00aa);
+    height:5px;
+}
+
+.controls{
+    position:absolute;
+    bottom:10px;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:20px;
+}
+
+.btn{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    border:none;
+    background:#00ff9f;
+    cursor:pointer;
+}
+
+.now{
+    position:absolute;
+    top:10px;
+    left:20px;
+    max-width:50%;
+    font-weight:600;
+    color:#00ffcc;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="sidebar">
+    <div class="mini-player">
+        <img src="logo.png" class="mini-cover" id="miniCover">
+        <div class="mini-title" id="mini-title">Chưa phát</div>
+    </div>
+
+    <div class="welcome">
+        Xin chào 👋<br>
+        đến với web nhạc của<br>
+        <b>Nguyễn Hoài Nam</b>
+    </div>
+</div>
+
+<div class="main">
+    <h2>Trang chủ</h2>
+
+    <div class="upload-box" id="uploadBox">
+        Kéo file vào hoặc click
+        <input type="file" id="file" hidden>
+        <div class="upload-name" id="fileName"></div>
+
+        <div class="upload-progress">
+            <div class="upload-bar" id="uploadBar"></div>
+        </div>
+    </div>
+
+    <button onclick="upload()">Upload</button>
+
+    <!-- 🔥 SCROLL LIST -->
+    <div class="list-container">
+        <div id="list"></div>
+    </div>
+
+</div>
+
+</div>
+
+<div class="player">
+<div class="now" id="now">Chưa phát</div>
+
+<div class="wave" id="wave"></div>
+
+<div class="controls">
+    <button class="btn" onclick="prev()">⏮</button>
+    <button class="btn" onclick="play()">▶</button>
+    <button class="btn" onclick="next()">⏭</button>
+</div>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+let audio = document.getElementById("audio");
+let listDiv = document.getElementById("list");
+let now = document.getElementById("now");
+let miniTitle = document.getElementById("mini-title");
+let miniCover = document.getElementById("miniCover");
+
+let songs = [];
+let current = 0;
+
+function cleanName(name){
+    try{name = decodeURIComponent(name);}catch(e){}
+    return name.replace(/^\d+_/, '')
+               .replace(/_/g,' ')
+               .replace(/\.mp3$/i,'')
+               .trim();
+}
+
+async function load(){
+    let res = await fetch("/songs");
+    songs = await res.json();
+
+    listDiv.innerHTML = "";
+
+    songs.forEach((s,i)=>{
+        let div = document.createElement("div");
+        div.className = "song";
+
+        div.innerHTML = `
+            <span>${i+1}. ${cleanName(s)}</span>
+            <span class="del" onclick="deleteSong('${s}',event)">🗑</span>
+        `;
+
+        div.onclick = ()=>playSong(i);
+        listDiv.appendChild(div);
+    });
+}
+
+function playSong(i){
+    current = i;
+    audio.src = "/uploads/" + songs[i];
+    audio.play();
+
+    let name = cleanName(songs[i]);
+    now.innerText = name;
+    miniTitle.innerText = name;
+}
+
+function play(){
+    if(!audio.src && songs.length>0){
+        playSong(0);
+    }else{
+        audio.paused ? audio.play() : audio.pause();
+    }
+}
+
+function next(){
+    current = (current+1)%songs.length;
+    playSong(current);
+}
+
+function prev(){
+    current = (current-1+songs.length)%songs.length;
+    playSong(current);
+}
+
+audio.onplay = ()=>{
+    miniCover.classList.add("playing");
+    startWave();
+};
+
+audio.onpause = ()=>{
+    miniCover.classList.remove("playing");
+    stopWave();
+};
+
+audio.onended = audio.onpause;
+
+async function deleteSong(name,e){
+    e.stopPropagation();
+    await fetch("/songs/"+encodeURIComponent(name),{method:"DELETE"});
+    load();
+}
+
+/* UPLOAD */
+let uploadBox = document.getElementById("uploadBox");
+let fileInput = document.getElementById("file");
+let fileName = document.getElementById("fileName");
+let uploadBar = document.getElementById("uploadBar");
+
+uploadBox.onclick = ()=> fileInput.click();
+
+fileInput.onchange = ()=>{
+    fileName.innerText = fileInput.files[0]?.name || "";
+};
+
+uploadBox.ondragover = (e)=>{
+    e.preventDefault();
+    uploadBox.classList.add("drag");
+};
+
+uploadBox.ondragleave = ()=>{
+    uploadBox.classList.remove("drag");
+};
+
+uploadBox.ondrop = (e)=>{
+    e.preventDefault();
+    uploadBox.classList.remove("drag");
+    fileInput.files = e.dataTransfer.files;
+    fileName.innerText = fileInput.files[0].name;
+};
+
+function upload(){
+    let file = fileInput.files[0];
+    if(!file) return alert("Chọn file!");
+
+    let form = new FormData();
+    form.append("file", file);
+
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST","/upload");
+
+    xhr.upload.onprogress = (e)=>{
+        uploadBar.style.width = (e.loaded/e.total*100)+"%";
+    };
+
+    xhr.onload = ()=>{
+        uploadBar.style.width="0%";
+        fileName.innerText="";
+        load();
+    };
+
+    xhr.send(form);
+}
+
+/* WAVE */
+let bars = [];
+let wave = document.getElementById("wave");
+
+for(let i=0;i<80;i++){
+    let b = document.createElement("div");
+    b.className="bar";
+    wave.appendChild(b);
+    bars.push(b);
+}
+
+let waveInterval=null;
+
+function startWave(){
+    if(waveInterval) return;
+    waveInterval=setInterval(()=>{
+        bars.forEach(b=>{
+            b.style.height=(Math.random()*60+5)+"px";
+        });
+    },80);
+}
+
+function stopWave(){
+    clearInterval(waveInterval);
+    waveInterval=null;
+}
+
+load();
+</script>
+
+</body>
+</html>

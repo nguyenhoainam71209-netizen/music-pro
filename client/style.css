@@ -1,0 +1,111 @@
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #050b14;
+  color: #fff;
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #071421;
+  padding: 20px;
+  height: 100vh;
+}
+
+.logo {
+  color: #00ffcc;
+  font-size: 22px;
+  margin-bottom: 30px;
+}
+
+.menu div {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.menu .active {
+  background: #00ffcc33;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px;
+}
+
+/* LIST */
+.song {
+  padding: 10px;
+  border-bottom: 1px solid #111;
+  cursor: pointer;
+}
+
+.song:hover {
+  background: #00ffcc22;
+}
+
+/* PLAYER */
+.player {
+  position: fixed;
+  bottom: 0;
+  left: 220px;
+  right: 0;
+  background: linear-gradient(90deg, #050b14, #071a2b);
+  padding: 10px;
+  box-shadow: 0 -2px 20px rgba(0,255,200,0.2);
+}
+
+#title {
+  color: #00ffcc;
+}
+
+#time {
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* WAVE */
+canvas {
+  width: 100%;
+  height: 90px;
+}
+
+/* PROGRESS */
+.progress {
+  height: 4px;
+  background: #111;
+  margin-top: 5px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00ffcc, #00ccff);
+}
+
+/* CONTROLS */
+.controls {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.controls button {
+  background: #00ffcc;
+  border: none;
+  margin: 0 10px;
+  padding: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 15px #00ffcc;
+}
+
+.controls .play {
+  font-size: 20px;
+  padding: 16px;
+}
